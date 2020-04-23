@@ -1,7 +1,16 @@
 package main
 
 type ObjectMeta struct {
-	name string
-	size int64
-	hash []byte
+	Size int64
+	ETag string
+}
+
+type ObjectAddress struct {
+	Key   string
+	Route []string
+}
+
+type ObjectInfo struct {
+	Meta    ObjectMeta
+	Address ObjectAddress
 }
