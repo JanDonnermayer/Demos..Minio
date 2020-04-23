@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-func printObjects() {
+func countObjects() {
 	endpoint := "localhost:9001"
 	accessKeyID := "minio"
 	secretAccessKey := "minio123"

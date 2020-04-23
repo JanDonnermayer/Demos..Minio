@@ -1,46 +1,43 @@
 package main
 
 import (
-	"crypto/sha256"
-	"fmt"
+	// "crypto/sha256"
+	"github.com/cespare/xxhash"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
 )
 
-func countFiles() {
-	var files []string
-	var hashes [][]byte
+func getMeta(path string, info os.FileInfo) ObjectMeta {
 
-	fmt.Println("obtaining files...")
-
-	root := "C:/Users/jan/AppData/Local/Temp/.minio-share/src3"
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-
-		if !info.IsDir() {
-
-			files = append(files, path)
-
-			f, err := os.Open(path)
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer f.Close()
-
-			h := sha256.New()
-			if _, err := io.Copy(h, f); err != nil {
-				log.Fatal(err)
-			}
-
-			hashes = append(hashes, h.Sum(nil))
-		}
-
-		return nil
-	})
+	f, err := os.Open(path)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	h := xxhash.New()
+	if _, err := io.Copy(h, f); err != nil {
+		log.Fatal(err)
 	}
 
-	println(len(files))
+	return ObjectMeta{
+		name: info.Name(),
+		size: info.Size(),
+		hash: h.Sum(nil),
+	}
+}
+
+func getMetas(directory string) ([]ObjectMeta, error) {
+	var metas []ObjectMeta
+
+	err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			metas = append(metas, getMeta(path, info))
+		}
+		return nil
+    })
+    return metas, err
+
 }
