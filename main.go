@@ -2,37 +2,87 @@ package main
 
 import (
 	"fmt"
+	"io"
+
 	"github.com/golang-collections/collections/set"
+	"github.com/minio/minio-go/v6"
 )
 
 func main() {
-	directory := "C:/Users/jan/AppData/Local/Temp/.minio-share/src3"
-	bucket := "test"
 
-	fmt.Println("obtaining file infos...")
-	infosFile, err := getInfosFS(directory)
+	endpoint := "localhost:9001"
+	accessKeyID := "minio"
+	secretAccessKey := "minio123"
+	useSSL := false
+
+	minioClient, err := minio.New(
+		endpoint,
+		accessKeyID,
+		secretAccessKey,
+		useSSL,
+	)
 	if err != nil {
 		panic(err)
 	}
-	println(len(infosFile))
 
+	minioStore := MinioObjectStore{
+		Client: minioClient,
+		Bucket: "test",
+	}
 	fmt.Println("obtaining object infos...")
-	infosMinio := getInfosMinio(bucket)
+	infosMinio := getInfosMinio(&minioStore)
 	println(len(infosMinio))
 
 	minioSet := set.New()
 	for _, m := range infosMinio {
 		minioSet.Insert(m)
 	}
-	fmt.Printf("%v distinct objects \n", minioSet.Len())
+
+	fsStore := FsObjectStore{
+		RootDirectory: "C:/Users/jan/AppData/Local/Temp/.minio-share/src3",
+	}
+	fmt.Println("obtaining file infos...")
+	infosFile, err := getInfosFS(&fsStore)
+	if err != nil {
+		panic(err)
+	}
+	println(len(infosFile))
 
 	fileSet := set.New()
 	for _, m := range infosFile {
 		fileSet.Insert(m)
 	}
-	fmt.Printf("%v distinct files \n", fileSet.Len())
 
-	fmt.Println("obtaining differences...")
 	diff := minioSet.Difference(fileSet)
-	println(diff.Len())
+	fmt.Printf("obtained %v differences \n", diff.Len())
+
+	var diffInfos []ObjectInfo
+	diff.Do(func(info interface{}) {
+		diffInfos = append(diffInfos, info.(ObjectInfo))
+	})
+
+	for _, diffInfo := range diffInfos {
+		address := diffInfo.Address
+
+		writer, err := getWriterFS(&fsStore, address)
+		if err != nil {
+			fmt.Printf("Error: %v \n", err)
+			continue
+		}
+		defer writer.Close()
+
+		reader, err := getReaderMinio(&minioStore, address)
+		if err != nil {
+			fmt.Printf("Error: %v \n", err)
+			continue
+		}
+		defer reader.Close()
+
+		fmt.Printf("Copy %+v \n", address)
+		_, err = io.Copy(writer, reader)
+		if err != nil {
+			fmt.Printf("Error: %v \n", err)
+		}
+	}
+
 }

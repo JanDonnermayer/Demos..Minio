@@ -10,6 +10,24 @@ import (
 	"strings"
 )
 
+type FsObjectStore struct {
+	RootDirectory string
+}
+
+func getReaderFS(store *FsObjectStore, address ObjectAddress) (io.ReadCloser, error) {
+	path := store.RootDirectory + "/" + address.Route + "/" + address.Key
+	_, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	return os.Open(path)
+}
+
+func getWriterFS(store *FsObjectStore, address ObjectAddress) (io.WriteCloser, error) {
+	path := store.RootDirectory + "/" + address.Route + "/" + address.Key
+	return os.Create(path)
+}
+
 func getMetaFS(path string, info os.FileInfo) ObjectMeta {
 
 	f, err := os.Open(path)
@@ -30,26 +48,28 @@ func getMetaFS(path string, info os.FileInfo) ObjectMeta {
 }
 
 func getAddressFS(relPath string) ObjectAddress {
-	segments := strings.Split(relPath, "/")
+	nonempty := func(s string) bool { return s != "" }
+	segments := filter(strings.Split(relPath, "/"), nonempty)
 
 	return ObjectAddress{
-		Key: segments[len(segments)-1],
-		Route: segments[:len(segments)-1],
+		Key:   segments[len(segments)-1],
+		Route: strings.Join(segments[:len(segments)-1], "/"),
 	}
 }
 
-func getInfosFS(directory string) ([]ObjectInfo, error) {
+func getInfosFS(store *FsObjectStore) ([]ObjectInfo, error) {
 	var infos []ObjectInfo
 
-	err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(store.RootDirectory, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
 
-		relPath := strings.ReplaceAll(path, directory, "")
+		normPath := strings.ReplaceAll(path, "\\", "/")
+		relPath := strings.ReplaceAll(normPath, store.RootDirectory, "")
 
-		objInfo := ObjectInfo {
-			Meta:    getMetaFS(path, info),
+		objInfo := ObjectInfo{
+			Meta:    getMetaFS(normPath, info),
 			Address: getAddressFS(relPath),
 		}
 
