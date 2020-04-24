@@ -10,31 +10,30 @@ import (
 
 func synchronize(store1 ObjectStore, store2 ObjectStore) {
 
-	fmt.Println("gathering infos in source...")
+	fmt.Println("indexing source...")
 	infosSourceCh := store1.GetInfos()
 
-	fmt.Println("gathering infos in target...")
+	fmt.Println("indexing target...")
 	infosTargetCh := store2.GetInfos()
-
 	
 	setSource := set.New()
 	for m := range infosSourceCh {
 		setSource.Insert(m)
 	}
-	fmt.Printf("source: %v infos\n", setSource.Len())
+	fmt.Printf("source: %v objects\n", setSource.Len())
 
 	setTarget := set.New()
 	for m := range infosTargetCh {
 		setTarget.Insert(m)
 	}
-	fmt.Printf("target: %v infos\n", setTarget.Len())
+	fmt.Printf("target: %v objects\n", setTarget.Len())
 
 
 	diffAdd := setSource.Difference(setTarget)
-	fmt.Printf("source except target: %v infos\n", diffAdd.Len())
+	fmt.Printf("source except target: %v objects\n", diffAdd.Len())
 
 	diffSub := setTarget.Difference(setSource)
-	fmt.Printf("target except source: %v infos\n", diffSub.Len())
+	fmt.Printf("target except source: %v objects\n", diffSub.Len())
 	
 	var diffAddInfos []ObjectInfo
 	diffAdd.Do(func(info interface{}) {
