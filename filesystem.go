@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync/atomic"
 )
 
 type FsObjectStore struct {
@@ -112,23 +111,6 @@ func (store FsObjectStore) GetInfosInternal(addresses <-chan ObjectAddress) <-ch
 	return resultsCh
 }
 
-func mergeAtomic(cs ...<-chan ObjectInfo) <-chan ObjectInfo {
-	out := make(chan ObjectInfo)
-	var i int32
-	atomic.StoreInt32(&i, int32(len(cs)))
-	for _, c := range cs {
-		go func(c <-chan ObjectInfo) {
-			for v := range c {
-				out <- v
-			}
-			if atomic.AddInt32(&i, -1) == 0 {
-				close(out)
-			}
-		}(c)
-	}
-	return out
-}
-
 func (store FsObjectStore) GetInfos() <-chan ObjectInfo {
 	addresses := store.GetAddresses()
 
@@ -136,5 +118,6 @@ func (store FsObjectStore) GetInfos() <-chan ObjectInfo {
 		return store.GetInfosInternal(addresses)
 	}
 
+	// Process the addresses using multiple consumers
 	return mergeAtomic(getInfos(), getInfos(), getInfos(), getInfos())
 }
