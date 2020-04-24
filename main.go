@@ -30,26 +30,23 @@ func main() {
 		Bucket: "test",
 	}
 	fmt.Println("obtaining object infos...")
-	infosMinio := minioStore.GetInfos()
-	println(len(infosMinio))
-
-	minioSet := set.New()
-	for _, m := range infosMinio {
-		minioSet.Insert(m)
-	}
+	infosMinioCh := make(chan ObjectInfo)
+	go minioStore.GetInfos(infosMinioCh)
 
 	fsStore := FsObjectStore{
 		RootDirectory: "C:/Users/jan/AppData/Local/Temp/.minio-share/src3",
 	}
 	fmt.Println("obtaining file infos...")
-	infosFile, err := fsStore.GetInfos()
-	if err != nil {
-		panic(err)
+	infosFsCh := make(chan ObjectInfo)
+	go fsStore.GetInfos(infosFsCh)
+
+	minioSet := set.New()
+	for m := range infosMinioCh {
+		minioSet.Insert(m)
 	}
-	println(len(infosFile))
 
 	fileSet := set.New()
-	for _, m := range infosFile {
+	for m := range infosFsCh {
 		fileSet.Insert(m)
 	}
 
