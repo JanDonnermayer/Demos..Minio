@@ -36,7 +36,7 @@ func (store FsObjectStore) GetWriter(address ObjectAddress) (io.WriteCloser, err
 	return os.Create(path)
 }
 
-func (store FsObjectStore) GetMeta(address ObjectAddress) ObjectMeta {
+func (store FsObjectStore) getMeta(address ObjectAddress) ObjectMeta {
 	path := filepath.Join(store.RootDirectory, address.Route, address.Key)
 
 	stat, err := os.Stat(path)
@@ -99,7 +99,7 @@ func (store FsObjectStore) getInfosInternal(addresses <-chan ObjectAddress) <-ch
 	
 	go func() {
 		for address := range addresses {
-			meta := store.GetMeta(address)
+			meta := store.getMeta(address)
 			resultsCh <- ObjectInfo{
 				Meta:    meta,
 				Address: address,
@@ -118,7 +118,7 @@ func (store FsObjectStore) GetInfos() <-chan ObjectInfo {
 		return store.getInfosInternal(addresses)
 	}
 
-	// Process the addresses using multiple consumers
+	// Process the addresses-channel using multiple consumers
 	return mergeAtomic(
 		getInfos(), getInfos(), 
 		getInfos(), getInfos(),

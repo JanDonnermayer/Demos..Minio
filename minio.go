@@ -62,9 +62,7 @@ func (store MinioObjectStore) GetInfos() <-chan ObjectInfo {
 				log.Println(info.Err)
 			}
 	
-			objInfo := getInfoMinio(info)
-	
-			resultsCh <- objInfo
+			resultsCh <- getInfoMinio(info)
 		}
 		close(resultsCh)
 	}() 
