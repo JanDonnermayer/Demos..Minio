@@ -30,7 +30,7 @@ func main() {
 		Bucket: "test",
 	}
 	fmt.Println("obtaining object infos...")
-	infosMinio := getInfosMinio(&minioStore)
+	infosMinio := minioStore.GetInfos()
 	println(len(infosMinio))
 
 	minioSet := set.New()
@@ -42,7 +42,7 @@ func main() {
 		RootDirectory: "C:/Users/jan/AppData/Local/Temp/.minio-share/src3",
 	}
 	fmt.Println("obtaining file infos...")
-	infosFile, err := getInfosFS(&fsStore)
+	infosFile, err := fsStore.GetInfos()
 	if err != nil {
 		panic(err)
 	}
@@ -64,14 +64,14 @@ func main() {
 	for _, diffInfo := range diffInfos {
 		address := diffInfo.Address
 
-		writer, err := getWriterFS(&fsStore, address)
+		writer, err := fsStore.GetWriter(address)
 		if err != nil {
 			fmt.Printf("Error: %v \n", err)
 			continue
 		}
 		defer writer.Close()
 
-		reader, err := getReaderMinio(&minioStore, address)
+		reader, err := minioStore.GetReader(address)
 		if err != nil {
 			fmt.Printf("Error: %v \n", err)
 			continue

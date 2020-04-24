@@ -14,7 +14,7 @@ type FsObjectStore struct {
 	RootDirectory string
 }
 
-func getReaderFS(store *FsObjectStore, address ObjectAddress) (io.ReadCloser, error) {
+func (store FsObjectStore) GetReader(address ObjectAddress) (io.ReadCloser, error) {
 	path := store.RootDirectory + "/" + address.Route + "/" + address.Key
 	_, err := os.Stat(path)
 	if err != nil {
@@ -23,8 +23,15 @@ func getReaderFS(store *FsObjectStore, address ObjectAddress) (io.ReadCloser, er
 	return os.Open(path)
 }
 
-func getWriterFS(store *FsObjectStore, address ObjectAddress) (io.WriteCloser, error) {
-	path := store.RootDirectory + "/" + address.Route + "/" + address.Key
+func (store FsObjectStore) GetWriter(address ObjectAddress) (io.WriteCloser, error) {
+	directory := store.RootDirectory + "/" + address.Route 
+	path := directory + "/" + address.Key
+	if _, err := os.Stat(directory); os.IsNotExist(err) {
+		errDir := os.MkdirAll("test", 0755)
+		if errDir != nil {
+			return nil, err
+		}
+	}
 	return os.Create(path)
 }
 
@@ -57,7 +64,7 @@ func getAddressFS(relPath string) ObjectAddress {
 	}
 }
 
-func getInfosFS(store *FsObjectStore) ([]ObjectInfo, error) {
+func (store FsObjectStore) GetInfos() ([]ObjectInfo, error) {
 	var infos []ObjectInfo
 
 	err := filepath.Walk(store.RootDirectory, func(path string, info os.FileInfo, err error) error {

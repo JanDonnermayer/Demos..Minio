@@ -12,7 +12,7 @@ type MinioObjectStore struct {
 	Client *minio.Client
 }
 
-func getReaderMinio(store *MinioObjectStore, address ObjectAddress) (io.ReadCloser, error) {
+func (store MinioObjectStore) GetReader(address ObjectAddress) (io.ReadCloser, error) {
 	objectName := address.Route + "/" + address.Key
 	return store.Client.GetObject(
 		store.Bucket,
@@ -21,7 +21,10 @@ func getReaderMinio(store *MinioObjectStore, address ObjectAddress) (io.ReadClos
 	)
 }
 
-// toDo: getWriter
+func (store MinioObjectStore) GetWriter(address ObjectAddress) (io.WriteCloser, error) {
+	panic("Not implemented")
+}
+
 
 func getMetaMinio(info minio.ObjectInfo) ObjectMeta {
 	etag := strings.ReplaceAll(info.ETag, "\"", "")
@@ -49,7 +52,7 @@ func getInfoMinio(info minio.ObjectInfo) ObjectInfo {
 	}
 }
 
-func getInfosMinio(store *MinioObjectStore) []ObjectInfo {
+func (store MinioObjectStore) GetInfos() []ObjectInfo {
 
 	doneCh := make(chan struct{})
 	defer close(doneCh)

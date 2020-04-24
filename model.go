@@ -18,7 +18,6 @@ type ObjectInfo struct {
 }
 
 
-
 type ObjectStore interface {
 	GetReader(address ObjectAddress) io.ReadCloser
 	GetWriter(address ObjectAddress) io.WriteCloser
