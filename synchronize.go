@@ -29,10 +29,10 @@ func synchronize(store1 ObjectStore, store2 ObjectStore) {
 	fmt.Printf("obtained %v infos in source.\n", setSource.Len())
 
 	diffAdd := setSource.Difference(setTarget)
-	fmt.Printf("obtained %v additive differences \n", diffAdd.Len())
+	fmt.Printf("source except target: %v infos \n", diffAdd.Len())
 
 	diffSub := setTarget.Difference(setSource)
-	fmt.Printf("obtained %v subtractive differences \n", diffSub.Len())
+	fmt.Printf("target except source: %v infos \n", diffSub.Len())
 	
 	var diffAddInfos []ObjectInfo
 	diffAdd.Do(func(info interface{}) {

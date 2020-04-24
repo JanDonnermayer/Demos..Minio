@@ -94,7 +94,7 @@ func (store FsObjectStore) GetAddresses() <-chan ObjectAddress {
 	return resultsCh
 }
 
-func (store FsObjectStore) GetInfosInternal(addresses <-chan ObjectAddress) <-chan ObjectInfo {
+func (store FsObjectStore) getInfosInternal(addresses <-chan ObjectAddress) <-chan ObjectInfo {
 	resultsCh := make(chan ObjectInfo)
 	
 	go func() {
@@ -115,9 +115,12 @@ func (store FsObjectStore) GetInfos() <-chan ObjectInfo {
 	addresses := store.GetAddresses()
 
 	getInfos := func () <-chan ObjectInfo  {
-		return store.GetInfosInternal(addresses)
+		return store.getInfosInternal(addresses)
 	}
 
 	// Process the addresses using multiple consumers
-	return mergeAtomic(getInfos(), getInfos(), getInfos(), getInfos())
+	return mergeAtomic(
+		getInfos(), getInfos(), 
+		getInfos(), getInfos(),
+	)
 }
