@@ -67,7 +67,6 @@ func (store MinioObjectStore) GetInfos() <-chan ObjectInfo {
 			resultsCh <- objInfo
 		}
 		close(resultsCh)
-		close(doneCh)
 	}() 
 	
 	return resultsCh

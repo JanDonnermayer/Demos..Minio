@@ -10,23 +10,23 @@ import (
 
 func synchronize(store1 ObjectStore, store2 ObjectStore) {
 
-	fmt.Println("obtaining infosTarget...")
+	fmt.Println("gathering infos in target...")
 	infosTargetCh := store2.GetInfos()
 
-	fmt.Println("obtaining infosSource...")
+	fmt.Println("gathering infos in source...")
 	infosSourceCh := store1.GetInfos()
 
 	setTarget := set.New()
 	for m := range infosTargetCh {
 		setTarget.Insert(m)
 	}
-	fmt.Printf("obtained %v infosTarget.\n", setTarget.Len())
+	fmt.Printf("obtained %v infos in target.\n", setTarget.Len())
 
 	setSource := set.New()
 	for m := range infosSourceCh {
 		setSource.Insert(m)
 	}
-	fmt.Printf("obtained %v infosSource.\n", setSource.Len())
+	fmt.Printf("obtained %v infos in source.\n", setSource.Len())
 
 	diffAdd := setSource.Difference(setTarget)
 	fmt.Printf("obtained %v additive differences \n", diffAdd.Len())
