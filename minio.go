@@ -53,10 +53,10 @@ func getInfoMinio(info minio.ObjectInfo) ObjectInfo {
 }
 
 func (store MinioObjectStore) GetInfos(resultsCh chan ObjectInfo) {
+	defer close(resultsCh)
 
 	doneCh := make(chan struct{})
 	defer close(doneCh)
-	defer close(resultsCh)
 
 	for info := range store.Client.ListObjects(store.Bucket, "", true, doneCh) {
 		if info.Err != nil {

@@ -90,5 +90,4 @@ func (store FsObjectStore) GetInfos(resultsCh chan ObjectInfo) {
 	if err != nil {
 		panic(err)
 	}
-
 }
