@@ -21,5 +21,5 @@ type ObjectInfo struct {
 type ObjectStore interface {
 	GetReader(address ObjectAddress) (io.ReadCloser, error)
 	GetWriter(address ObjectAddress) (io.WriteCloser, error)
-	GetInfos(resultsCh chan ObjectInfo) 
+	GetInfos() <-chan ObjectInfo
 }

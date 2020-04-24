@@ -52,19 +52,23 @@ func getInfoMinio(info minio.ObjectInfo) ObjectInfo {
 	}
 }
 
-func (store MinioObjectStore) GetInfos(resultsCh chan ObjectInfo) {
-	defer close(resultsCh)
-
+func (store MinioObjectStore) GetInfos() <-chan ObjectInfo {
+	resultsCh := make(chan ObjectInfo)
 	doneCh := make(chan struct{})
-	defer close(doneCh)
 
-	for info := range store.Client.ListObjects(store.Bucket, "", true, doneCh) {
-		if info.Err != nil {
-			log.Println(info.Err)
+	go func() {
+		for info := range store.Client.ListObjects(store.Bucket, "", true, doneCh) {
+			if info.Err != nil {
+				log.Println(info.Err)
+			}
+	
+			objInfo := getInfoMinio(info)
+	
+			resultsCh <- objInfo
 		}
-
-		objInfo := getInfoMinio(info)
-
-		resultsCh <- objInfo
-	}
+		close(doneCh)
+		close(resultsCh)
+	}() 
+	
+	return resultsCh
 }

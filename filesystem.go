@@ -24,7 +24,7 @@ func (store FsObjectStore) GetReader(address ObjectAddress) (io.ReadCloser, erro
 }
 
 func (store FsObjectStore) GetWriter(address ObjectAddress) (io.WriteCloser, error) {
-	
+
 	directory := filepath.Join(store.RootDirectory, address.Route)
 	if _, err := os.Stat(directory); os.IsNotExist(err) {
 		errDir := os.MkdirAll(directory, os.ModePerm)
@@ -50,7 +50,7 @@ func getMetaFS(path string, info os.FileInfo) ObjectMeta {
 		log.Fatal(err)
 	}
 
-	// ToDo: impl large files handling where MD5 is concatenation	
+	// ToDo: impl large files handling where MD5 is concatenation
 	return ObjectMeta{
 		Size: info.Size(),
 		ETag: hex.EncodeToString(h.Sum(nil)),
@@ -67,27 +67,28 @@ func getAddressFS(relPath string) ObjectAddress {
 	}
 }
 
-func (store FsObjectStore) GetInfos(resultsCh chan ObjectInfo) {
-	defer close(resultsCh)
-	
-	err := filepath.Walk(store.RootDirectory, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
+func (store FsObjectStore) GetInfos() <-chan ObjectInfo {
+	resultsCh := make(chan ObjectInfo)
+
+	go func() {
+		filepath.Walk(store.RootDirectory, func(path string, info os.FileInfo, err error) error {
+			if info.IsDir() {
+				return nil
+			}
+
+			normPath := strings.ReplaceAll(path, "\\", "/")
+			relPath := strings.ReplaceAll(normPath, store.RootDirectory, "")
+
+			objInfo := ObjectInfo{
+				Meta:    getMetaFS(normPath, info),
+				Address: getAddressFS(relPath),
+			}
+
+			resultsCh <- objInfo
 			return nil
-		}
+		})
+		close(resultsCh)
+	}()
 
-		normPath := strings.ReplaceAll(path, "\\", "/")
-		relPath := strings.ReplaceAll(normPath, store.RootDirectory, "")
-
-		objInfo := ObjectInfo{
-			Meta:    getMetaFS(normPath, info),
-			Address: getAddressFS(relPath),
-		}
-
-		resultsCh <- objInfo
-		return nil
-	})
-
-	if err != nil {
-		panic(err)
-	}
+	return resultsCh
 }

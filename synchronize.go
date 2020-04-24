@@ -11,12 +11,10 @@ import (
 func synchronize(store1 ObjectStore, store2 ObjectStore) {
 
 	fmt.Println("obtaining infosSource...")
-	infosSourceCh := make(chan ObjectInfo)
-	go store1.GetInfos(infosSourceCh)
+	infosSourceCh := store1.GetInfos()
 
 	fmt.Println("obtaining infosTarget...")
-	infosTargetCh := make(chan ObjectInfo)
-	go store2.GetInfos(infosTargetCh)
+	infosTargetCh := store2.GetInfos()
 
 	set1 := set.New()
 	for m := range infosSourceCh {
