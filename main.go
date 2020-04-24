@@ -29,7 +29,7 @@ func main() {
 		Client: minioClient,
 		Bucket: "test",
 	}
-	fmt.Println("obtaining object infos...")
+	fmt.Println("obtaining minio infos...")
 	infosMinioCh := make(chan ObjectInfo)
 	go minioStore.GetInfos(infosMinioCh)
 
@@ -44,11 +44,13 @@ func main() {
 	for m := range infosMinioCh {
 		minioSet.Insert(m)
 	}
+	fmt.Printf("obtained %v minio infos.\n", minioSet.Len())
 
 	fileSet := set.New()
 	for m := range infosFsCh {
 		fileSet.Insert(m)
 	}
+	fmt.Printf("obtained %v file infos.\n", minioSet.Len())
 
 	diff := minioSet.Difference(fileSet)
 	fmt.Printf("obtained %v differences \n", diff.Len())
@@ -58,7 +60,8 @@ func main() {
 		diffInfos = append(diffInfos, info.(ObjectInfo))
 	})
 
-	for _, diffInfo := range diffInfos {
+	lenDiff := len(diffInfos)
+	for i, diffInfo := range diffInfos {
 		address := diffInfo.Address
 
 		writer, err := fsStore.GetWriter(address)
@@ -75,7 +78,7 @@ func main() {
 		}
 		defer reader.Close()
 
-		fmt.Printf("Copy %+v \n", address)
+		fmt.Printf("%v of %v | Copy %+v \n", i+1, lenDiff, address)
 		_, err = io.Copy(writer, reader)
 		if err != nil {
 			fmt.Printf("Error: %v \n", err)
