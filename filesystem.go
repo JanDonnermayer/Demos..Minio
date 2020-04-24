@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,27 +36,36 @@ func (store FsObjectStore) GetWriter(address ObjectAddress) (io.WriteCloser, err
 	return os.Create(path)
 }
 
-func getMetaFS(path string, info os.FileInfo) ObjectMeta {
+func (store FsObjectStore) GetMeta(address ObjectAddress) ObjectMeta {
+	path := filepath.Join(store.RootDirectory, address.Route, address.Key)
+
+	stat, err := os.Stat(path)
+	if err != nil {
+		panic(err)
+	}
+	if stat.IsDir() {
+		panic("Path is directory!")
+	}
 
 	f, err := os.Open(path)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer f.Close()
 
 	h := md5.New()
 	if _, err := io.Copy(h, f); err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	// ToDo: impl large files handling where MD5 is concatenation
 	return ObjectMeta{
-		Size: info.Size(),
+		Size: stat.Size(),
 		ETag: hex.EncodeToString(h.Sum(nil)),
 	}
 }
 
-func getAddressFS(relPath string) ObjectAddress {
+func (store FsObjectStore) GetAddress(relPath string) ObjectAddress {
 	nonempty := func(s string) bool { return s != "" }
 	segments := filter(strings.Split(relPath, "/"), nonempty)
 
@@ -67,28 +75,42 @@ func getAddressFS(relPath string) ObjectAddress {
 	}
 }
 
-func (store FsObjectStore) GetInfos() <-chan ObjectInfo {
-	resultsCh := make(chan ObjectInfo)
+
+func (store FsObjectStore) GetAddresses() <-chan ObjectAddress {
+	resultsCh := make(chan ObjectAddress)
 
 	go func() {
 		filepath.Walk(store.RootDirectory, func(path string, info os.FileInfo, err error) error {
-			if info.IsDir() {
-				return nil
+			if !info.IsDir() {
+				normPath := strings.ReplaceAll(path, "\\", "/")
+				relPath := strings.ReplaceAll(normPath, store.RootDirectory, "")
+				resultsCh <- store.GetAddress(relPath)
 			}
-
-			normPath := strings.ReplaceAll(path, "\\", "/")
-			relPath := strings.ReplaceAll(normPath, store.RootDirectory, "")
-
-			objInfo := ObjectInfo{
-				Meta:    getMetaFS(normPath, info),
-				Address: getAddressFS(relPath),
-			}
-
-			resultsCh <- objInfo
 			return nil
 		})
 		close(resultsCh)
 	}()
 
 	return resultsCh
+}
+
+func (store FsObjectStore) GetInfosInternal(addresses <-chan ObjectAddress) <-chan ObjectInfo {
+	resultsCh := make(chan ObjectInfo)
+	
+	go func() {
+		for address := range addresses {
+			meta := store.GetMeta(address)
+			resultsCh <- ObjectInfo{
+				Meta:    meta,
+				Address: address,
+			}
+		}
+		close(resultsCh)
+	}()
+
+	return resultsCh
+}
+
+func (store FsObjectStore) GetInfos() <-chan ObjectInfo {
+	return store.GetInfosInternal(store.GetAddresses())
 }
