@@ -4,7 +4,7 @@ A synchronization tool which can transfer data between filesystem and minio obje
 
 ToDo:
 
-- Single file transfer & filter
+- ~~Single file transfer & filter~~
 - Delete
 - Write to Minio
 - MD5 for multipart

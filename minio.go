@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/minio/minio-go/v6"
 	"io"
 	"log"
 	"strings"
+
+	"github.com/minio/minio-go/v6"
 )
 
 type MinioObjectStore struct {
@@ -24,7 +25,6 @@ func (store MinioObjectStore) GetReader(address ObjectAddress) (io.ReadCloser, e
 func (store MinioObjectStore) GetWriter(address ObjectAddress) (io.WriteCloser, error) {
 	panic("Not implemented")
 }
-
 
 func getMetaMinio(info minio.ObjectInfo) ObjectMeta {
 	etag := strings.ReplaceAll(info.ETag, "\"", "")
@@ -52,20 +52,20 @@ func getInfoMinio(info minio.ObjectInfo) ObjectInfo {
 	}
 }
 
-func (store MinioObjectStore) GetInfos() <-chan ObjectInfo {
+func (store MinioObjectStore) GetInfos(addressPrefix string) <-chan ObjectInfo {
 	resultsCh := make(chan ObjectInfo)
 	doneCh := make(chan struct{})
 
 	go func() {
-		for info := range store.Client.ListObjects(store.Bucket, "", true, doneCh) {
+		for info := range store.Client.ListObjects(store.Bucket, addressPrefix, true, doneCh) {
 			if info.Err != nil {
 				log.Println(info.Err)
 			}
-	
+
 			resultsCh <- getInfoMinio(info)
 		}
 		close(resultsCh)
-	}() 
-	
+	}()
+
 	return resultsCh
 }

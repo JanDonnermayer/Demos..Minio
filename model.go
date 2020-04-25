@@ -17,9 +17,8 @@ type ObjectInfo struct {
 	Address ObjectAddress
 }
 
-
 type ObjectStore interface {
 	GetReader(address ObjectAddress) (io.ReadCloser, error)
 	GetWriter(address ObjectAddress) (io.WriteCloser, error)
-	GetInfos() <-chan ObjectInfo
+	GetInfos(addressPrefix string) <-chan ObjectInfo
 }

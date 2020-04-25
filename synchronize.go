@@ -8,14 +8,18 @@ import (
 	"github.com/golang-collections/collections/set"
 )
 
-func synchronize(store1 ObjectStore, store2 ObjectStore) {
+func synchronize(store1 ObjectStore, store2 ObjectStore, addrPref string) {
+	synchronize2(store1, store2, addrPref, addrPref)
+}
+
+func synchronize2(store1 ObjectStore, store2 ObjectStore, addrPrefSrc string, addrPrefTrg string) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
 	setSource := set.New()
 	go func() {
 		fmt.Println("indexing source...")
-		for m := range store1.GetInfos() {
+		for m := range store1.GetInfos(addrPrefSrc) {
 			setSource.Insert(m)
 		}
 		fmt.Printf("source: %v objects\n", setSource.Len())
@@ -25,7 +29,7 @@ func synchronize(store1 ObjectStore, store2 ObjectStore) {
 	setTarget := set.New()
 	go func() {
 		fmt.Println("indexing target...")
-		for m := range store2.GetInfos() {
+		for m := range store2.GetInfos(addrPrefTrg) {
 			setTarget.Insert(m)
 		}
 		fmt.Printf("target: %v objects\n", setTarget.Len())

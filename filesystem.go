@@ -75,15 +75,17 @@ func (store FsObjectStore) GetAddress(relPath string) ObjectAddress {
 	}
 }
 
-func (store FsObjectStore) GetAddresses() <-chan ObjectAddress {
+func (store FsObjectStore) GetAddresses(addressPrefix string) <-chan ObjectAddress {
 	resultsCh := make(chan ObjectAddress)
-
+	//ToDo: normalize prefix
 	go func() {
 		filepath.Walk(store.RootDirectory, func(path string, info os.FileInfo, err error) error {
 			if !info.IsDir() {
 				normPath := strings.ReplaceAll(path, "\\", "/")
-				relPath := strings.ReplaceAll(normPath, store.RootDirectory, "")
-				resultsCh <- store.GetAddress(relPath)
+				relPath := strings.ReplaceAll(normPath, store.RootDirectory + "/", "")
+				if strings.HasPrefix(relPath, addressPrefix) {
+					resultsCh <- store.GetAddress(relPath)
+				}
 			}
 			return nil
 		})
@@ -99,7 +101,7 @@ func (store FsObjectStore) getInfosInternal(addresses <-chan ObjectAddress) <-ch
 	go func() {
 		for address := range addresses {
 			meta := store.getMeta(address)
-			resultsCh <- ObjectInfo {
+			resultsCh <- ObjectInfo{
 				Meta:    meta,
 				Address: address,
 			}
@@ -110,8 +112,8 @@ func (store FsObjectStore) getInfosInternal(addresses <-chan ObjectAddress) <-ch
 	return resultsCh
 }
 
-func (store FsObjectStore) GetInfos() <-chan ObjectInfo {
-	addresses := store.GetAddresses()
+func (store FsObjectStore) GetInfos(addressPrefix string) <-chan ObjectInfo {
+	addresses := store.GetAddresses(addressPrefix)
 
 	getInfos := func() <-chan ObjectInfo {
 		return store.getInfosInternal(addresses)
