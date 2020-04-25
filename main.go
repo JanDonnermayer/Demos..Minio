@@ -37,6 +37,6 @@ func main() {
 	store1 := getFileStore("C:/Users/jan/AppData/Local/Temp/.minio-share/src3")
 	store2 := getFileStore("C:/Users/jan/AppData/Local/Temp/.minio-share/src2")
 
-	synchronize2(store1, store2, "Bachelorarbeit")
-	//synchronize(store1, store2)
+	//synchronize2(store1, store2, "Bachelorarbeit")
+	synchronize(store1, store2)
 }

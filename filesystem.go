@@ -122,6 +122,8 @@ func (store FsObjectStore) GetInfos(addressPrefix string) <-chan ObjectInfo {
 	// Process the addresses-channel using multiple consumers
 	return mergeAtomic(
 		getInfos(), getInfos(),
+		getInfos(), getInfos(),
+		getInfos(), getInfos(),
 	)
 }
 

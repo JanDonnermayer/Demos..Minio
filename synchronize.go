@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/golang-collections/collections/set"
 	"io"
 	"sync"
-	"github.com/golang-collections/collections/set"
 )
 
 func synchronize(source ObjectStore, target ObjectStore) {
@@ -39,35 +39,20 @@ func synchronize2(source ObjectStore, target ObjectStore, addrPref string) {
 
 	wg.Wait()
 
-	diffAdd := setSource.Difference(setTarget)
-	fmt.Printf("source except target: %v objects\n", diffAdd.Len())
+	getDiff := func(set1 *set.Set, set2 *set.Set) []ObjectInfo {
+		diff := set1.Difference(set2)
+		fmt.Printf("source except target: %v objects\n", diff.Len())
 
-	var diffAddInfos []ObjectInfo
-	diffAdd.Do(func(info interface{}) {
-		diffAddInfos = append(diffAddInfos, info.(ObjectInfo))
-	})
+		var diffInfos []ObjectInfo
+		diff.Do(func(info interface{}) {
+			diffInfos = append(diffInfos, info.(ObjectInfo))
+		})
 
-	diffSub := setTarget.Difference(setSource)
-	fmt.Printf("target except source: %v objects\n", diffSub.Len())
+		return diffInfos
+	}
 
-	var diffSubInfos []ObjectInfo
-	diffSub.Do(func(info interface{}) {
-		diffSubInfos = append(diffSubInfos, info.(ObjectInfo))
-	})
-
-	wg.Add(2)
-
-	go func() {
-		copy(source, target, diffAddInfos)
-		wg.Done()
-	}()
-
-	//go func() {
-	//	delete(target, diffSubInfos)
-	//	wg.Done()
-	//}()
-
-	wg.Wait()
+	delete(target, getDiff(setTarget, setSource))
+	copy(source, target, getDiff(setSource, setTarget))
 }
 
 func delete(target ObjectStore, infos []ObjectInfo) {
