@@ -6,7 +6,7 @@ ToDo:
 
 - ~~Single file transfer & filter~~
 - Delete
-- Write to Minio
+- ~~Write to Minio~~
 - MD5 for multipart
 - Cancellation Tokens
 - Error Handling

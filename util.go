@@ -1,6 +1,8 @@
 package main
 
-import "sync/atomic"
+import (
+	"sync/atomic"
+)
 
 func filter(ss []string, test func(string) bool) (ret []string) {
     for _, s := range ss {
@@ -27,3 +29,4 @@ func mergeAtomic(cs ...<-chan ObjectInfo) <-chan ObjectInfo {
 	}
 	return out
 }
+

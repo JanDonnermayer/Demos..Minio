@@ -4,7 +4,7 @@ import (
 	"io"
 	"log"
 	"strings"
-
+	"github.com/traherom/memstream"
 	"github.com/minio/minio-go/v6"
 )
 
@@ -23,7 +23,23 @@ func (store MinioObjectStore) GetReader(address ObjectAddress) (io.ReadCloser, e
 }
 
 func (store MinioObjectStore) GetWriter(address ObjectAddress) (io.WriteCloser, error) {
-	panic("Not implemented")
+	objectName := address.Route + "/" + address.Key
+	
+	memStr := memstream.New()
+
+	upload := func () error  {
+		_, err := store.Client.PutObject(
+			store.Bucket, objectName, 
+			memStr, int64(len(memStr.Bytes())),
+			minio.PutObjectOptions{},
+		)
+		return err
+	}
+
+	return customWriteCloser {
+		writeDelegate: memStr.Write,
+		closeDelegate: upload,
+	}, nil
 }
 
 func getMetaMinio(info minio.ObjectInfo) ObjectMeta {

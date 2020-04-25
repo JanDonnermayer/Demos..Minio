@@ -30,5 +30,5 @@ func main() {
 		RootDirectory: "C:/Users/jan/AppData/Local/Temp/.minio-share/src3",
 	}
 
-	synchronize(minioStore, fsStore)
+	synchronizePref(fsStore, minioStore, "Bachelorarbeit")
 }
