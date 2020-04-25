@@ -3,38 +3,43 @@ package main
 import (
 	"fmt"
 	"io"
+	"sync"
 
 	"github.com/golang-collections/collections/set"
 )
 
-
 func synchronize(store1 ObjectStore, store2 ObjectStore) {
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	fmt.Println("indexing source...")
-	infosSourceCh := store1.GetInfos()
-
-	fmt.Println("indexing target...")
-	infosTargetCh := store2.GetInfos()
-	
 	setSource := set.New()
-	for m := range infosSourceCh {
-		setSource.Insert(m)
-	}
-	fmt.Printf("source: %v objects\n", setSource.Len())
+	go func() {
+		fmt.Println("indexing source...")
+		for m := range store1.GetInfos() {
+			setSource.Insert(m)
+		}
+		fmt.Printf("source: %v objects\n", setSource.Len())
+		wg.Done()
+	}()
 
 	setTarget := set.New()
-	for m := range infosTargetCh {
-		setTarget.Insert(m)
-	}
-	fmt.Printf("target: %v objects\n", setTarget.Len())
+	go func() {
+		fmt.Println("indexing target...")
+		for m := range store2.GetInfos() {
+			setTarget.Insert(m)
+		}
+		fmt.Printf("target: %v objects\n", setTarget.Len())
+		wg.Done()
+	}()
 
+	wg.Wait()
 
 	diffAdd := setSource.Difference(setTarget)
 	fmt.Printf("source except target: %v objects\n", diffAdd.Len())
 
 	diffSub := setTarget.Difference(setSource)
 	fmt.Printf("target except source: %v objects\n", diffSub.Len())
-	
+
 	var diffAddInfos []ObjectInfo
 	diffAdd.Do(func(info interface{}) {
 		diffAddInfos = append(diffAddInfos, info.(ObjectInfo))

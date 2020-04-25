@@ -75,7 +75,6 @@ func (store FsObjectStore) GetAddress(relPath string) ObjectAddress {
 	}
 }
 
-
 func (store FsObjectStore) GetAddresses() <-chan ObjectAddress {
 	resultsCh := make(chan ObjectAddress)
 
@@ -96,11 +95,11 @@ func (store FsObjectStore) GetAddresses() <-chan ObjectAddress {
 
 func (store FsObjectStore) getInfosInternal(addresses <-chan ObjectAddress) <-chan ObjectInfo {
 	resultsCh := make(chan ObjectInfo)
-	
+
 	go func() {
 		for address := range addresses {
 			meta := store.getMeta(address)
-			resultsCh <- ObjectInfo{
+			resultsCh <- ObjectInfo {
 				Meta:    meta,
 				Address: address,
 			}
@@ -114,13 +113,12 @@ func (store FsObjectStore) getInfosInternal(addresses <-chan ObjectAddress) <-ch
 func (store FsObjectStore) GetInfos() <-chan ObjectInfo {
 	addresses := store.GetAddresses()
 
-	getInfos := func () <-chan ObjectInfo  {
+	getInfos := func() <-chan ObjectInfo {
 		return store.getInfosInternal(addresses)
 	}
 
 	// Process the addresses-channel using multiple consumers
 	return mergeAtomic(
-		getInfos(), getInfos(), 
 		getInfos(), getInfos(),
 	)
 }
