@@ -21,4 +21,5 @@ type ObjectStore interface {
 	GetReader(address ObjectAddress) (io.ReadCloser, error)
 	GetWriter(address ObjectAddress) (io.WriteCloser, error)
 	GetInfos(addressPrefix string) <-chan ObjectInfo
+	Delete(address ObjectAddress) error
 }

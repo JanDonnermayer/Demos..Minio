@@ -124,3 +124,8 @@ func (store FsObjectStore) GetInfos(addressPrefix string) <-chan ObjectInfo {
 		getInfos(), getInfos(),
 	)
 }
+
+func (store FsObjectStore) Delete(address ObjectAddress) error {
+	path := filepath.Join(store.RootDirectory, address.Route, address.Key)
+	return os.Remove(path)
+}

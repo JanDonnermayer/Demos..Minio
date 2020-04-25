@@ -4,8 +4,7 @@ import (
 	"github.com/minio/minio-go/v6"
 )
 
-func main() {
-
+func getMinioStore(bucketName string) ObjectStore {
 	endpoint := "localhost:9001"
 	accessKeyID := "minio"
 	secretAccessKey := "minio123"
@@ -21,14 +20,23 @@ func main() {
 		panic(err)
 	}
 
-	minioStore := MinioObjectStore{
+	return MinioObjectStore{
 		Client: minioClient,
-		Bucket: "test",
+		Bucket: bucketName,
 	}
+}
 
-	fsStore := FsObjectStore{
-		RootDirectory: "C:/Users/jan/AppData/Local/Temp/.minio-share/src3",
+func getFileStore(path string) ObjectStore {
+	return FsObjectStore{
+		RootDirectory: path,
 	}
+}
 
-	synchronizePref(fsStore, minioStore, "Bachelorarbeit")
+func main() {
+
+	store1 := getFileStore("C:/Users/jan/AppData/Local/Temp/.minio-share/src3")
+	store2 := getFileStore("C:/Users/jan/AppData/Local/Temp/.minio-share/src2")
+
+	synchronize2(store1, store2, "Bachelorarbeit")
+	//synchronize(store1, store2)
 }

@@ -1,11 +1,11 @@
 package main
 
 import (
+	"github.com/minio/minio-go/v6"
+	"github.com/traherom/memstream"
 	"io"
 	"log"
 	"strings"
-	"github.com/traherom/memstream"
-	"github.com/minio/minio-go/v6"
 )
 
 type MinioObjectStore struct {
@@ -24,19 +24,19 @@ func (store MinioObjectStore) GetReader(address ObjectAddress) (io.ReadCloser, e
 
 func (store MinioObjectStore) GetWriter(address ObjectAddress) (io.WriteCloser, error) {
 	objectName := address.Route + "/" + address.Key
-	
+
 	memStr := memstream.New()
 
-	upload := func () error  {
+	upload := func() error {
 		_, err := store.Client.PutObject(
-			store.Bucket, objectName, 
+			store.Bucket, objectName,
 			memStr, int64(len(memStr.Bytes())),
 			minio.PutObjectOptions{},
 		)
 		return err
 	}
 
-	return customWriteCloser {
+	return customWriteCloser{
 		writeDelegate: memStr.Write,
 		closeDelegate: upload,
 	}, nil
@@ -84,4 +84,9 @@ func (store MinioObjectStore) GetInfos(addressPrefix string) <-chan ObjectInfo {
 	}()
 
 	return resultsCh
+}
+
+func (store MinioObjectStore) Delete(address ObjectAddress) error {
+	objectName := address.Route + "/" + address.Key
+	return store.Client.RemoveObject(store.Bucket, objectName)
 }
