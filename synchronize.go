@@ -8,15 +8,18 @@ import (
 	"github.com/golang-collections/collections/set"
 )
 
+func synchronize(source ObjectStore, target ObjectStore) {
+	synchronizePref(source, target, "")
+}
 
-func synchronize(store1 ObjectStore, store2 ObjectStore, addrPref string) {
+func synchronizePref(source ObjectStore, target ObjectStore, addrPref string) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
 	setSource := set.New()
 	go func() {
 		fmt.Println("indexing source...")
-		for m := range store1.GetInfos(addrPref) {
+		for m := range source.GetInfos(addrPref) {
 			setSource.Insert(m)
 		}
 		fmt.Printf("source: %v objects\n", setSource.Len())
@@ -26,7 +29,7 @@ func synchronize(store1 ObjectStore, store2 ObjectStore, addrPref string) {
 	setTarget := set.New()
 	go func() {
 		fmt.Println("indexing target...")
-		for m := range store2.GetInfos(addrPref) {
+		for m := range target.GetInfos(addrPref) {
 			setTarget.Insert(m)
 		}
 		fmt.Printf("target: %v objects\n", setTarget.Len())
@@ -50,14 +53,14 @@ func synchronize(store1 ObjectStore, store2 ObjectStore, addrPref string) {
 	for i, diffInfo := range diffAddInfos {
 		address := diffInfo.Address
 
-		writer, err := store2.GetWriter(address)
+		writer, err := target.GetWriter(address)
 		if err != nil {
 			fmt.Printf("Error: %v \n", err)
 			continue
 		}
 		defer writer.Close()
 
-		reader, err := store1.GetReader(address)
+		reader, err := source.GetReader(address)
 		if err != nil {
 			fmt.Printf("Error: %v \n", err)
 			continue
