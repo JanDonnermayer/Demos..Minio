@@ -1,4 +1,4 @@
-# Demos..Minio
+# Demos.Minio
 
 A synchronization tool which can transfer data between filesystem and minio object-store. High performance is achieved by indexing source and target first, copying selectively.
 
